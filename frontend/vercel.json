@@ -1,0 +1,30 @@
+{
+  "name": "inventory-store-frontend",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "http://26.155.188.255:8000"
+  },
+  "build": {
+    "env": {
+      "VITE_API_URL": "http://26.155.188.255:8000"
+    }
+  }
+}

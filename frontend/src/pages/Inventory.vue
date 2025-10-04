@@ -1,0 +1,1 @@
+<template><div>Inventory page - under development</div></template>

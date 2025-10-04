@@ -1,0 +1,46 @@
+### Test Login API
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@demo.com",
+  "password": "admin123"
+}
+
+### Test Login API (via api.php route)
+POST http://localhost:8000/api.php/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@demo.com", 
+  "password": "admin123"
+}
+
+### Test Health Check
+GET http://localhost:8000/health
+
+### Test Get Current User (Auth/Me)
+GET http://localhost:8000/api/auth/me
+Authorization: Bearer eyJlbWFpbCI6ImFkbWluQGRlbW8uY29tIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzU5NTk4MjYyfQ==
+
+### Test Logout
+POST http://localhost:8000/api/auth/logout
+Content-Type: application/json
+
+### Test Staff Login
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "staff@demo.com",
+  "password": "staff123"
+}
+
+### Test Viewer Login
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "viewer@demo.com",
+  "password": "viewer123"
+}
