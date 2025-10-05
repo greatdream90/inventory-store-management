@@ -8,29 +8,29 @@
 - ✅ Free tier available
 - ✅ Easy configuration
 
-## Setup Steps:
+## Setup สำหรับ Database Only:
 
 1. **สมัคร Railway.app**
    - ไปที่ https://railway.app/
    - Login ด้วย GitHub account
 
-2. **Create New Project**
-   - เลือก "Deploy from GitHub repo"
-   - เลือก inventory-store-management repo
-   - เลือก backend folder
-
-3. **Add MySQL Database**
-   - ในโปรเจค คลิก "+ New"
-   - เลือก "Database" > "MySQL"
+2. **Create MySQL Database Only**
+   - Create New Project
+   - เลือก "Provision MySQL"
    - Railway จะสร้าง MySQL instance ให้
 
-4. **Configure Environment Variables**
+3. **Get Connection Details**
+   - ใน MySQL service dashboard
+   - ไปที่ Variables tab
+   - Copy connection details
+
+4. **Set ใน Netlify Environment Variables**
    ```env
-   DB_HOST=${{MySQL.MYSQL_HOST}}
-   DB_PORT=${{MySQL.MYSQL_PORT}}
-   DB_DATABASE=${{MySQL.MYSQL_DATABASE}}
-   DB_USERNAME=${{MySQL.MYSQL_USERNAME}}
-   DB_PASSWORD=${{MySQL.MYSQL_PASSWORD}}
+   DB_HOST=containers-us-west-xxx.railway.app
+   DB_PORT=6543
+   DB_DATABASE=railway  
+   DB_USERNAME=root
+   DB_PASSWORD=generated-password
    ```
 
 5. **Deploy Settings**

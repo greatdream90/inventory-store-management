@@ -1,0 +1,8 @@
+{
+  "name": "inventory-store-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Inventory Store API",
+  "dependencies": {
+    "mysql2": "^3.6.0"
+  }
+}

@@ -10,10 +10,14 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => {
-          // Remove /api prefix to pass directly to backend
-          const newPath = path.replace(/^\/api/, '');
-          console.log('Rewriting path:', path, '->', newPath || '/');
-          return newPath || '/';
+          // For local development, remove /api prefix
+          if (process.env.NODE_ENV !== 'production') {
+            const newPath = path.replace(/^\/api/, '');
+            console.log('Rewriting path:', path, '->', newPath || '/');
+            return newPath || '/';
+          }
+          // For production, keep /api for Netlify Functions
+          return path;
         },
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
