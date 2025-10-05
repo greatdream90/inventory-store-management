@@ -114,37 +114,54 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
-  
-  // Check if route requires authentication
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!authStore.isAuthenticated) {
+  try {
+    const authStore = useAuthStore()
+    
+    console.log('Navigating to:', to.name, 'Auth status:', authStore.isAuthenticated)
+    
+    // Check if route requires authentication
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+      if (!authStore.isAuthenticated) {
+        console.log('Redirecting to login - not authenticated')
+        next({ name: 'Login' })
+        return
+      }
+      
+      // Check role-based access
+      if (to.meta.role && !authStore.hasRole(to.meta.role)) {
+        console.log('Redirecting to dashboard - insufficient role')
+        next({ name: 'Dashboard' })
+        return
+      }
+      
+      // Check permission-based access
+      if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
+        console.log('Redirecting to dashboard - insufficient permission')
+        next({ name: 'Dashboard' })
+        return
+      }
+    }
+    
+    // Check if route requires guest (not authenticated)
+    if (to.matched.some(record => record.meta.requiresGuest)) {
+      if (authStore.isAuthenticated) {
+        console.log('Redirecting to dashboard - already authenticated')
+        next({ name: 'Dashboard' })
+        return
+      }
+    }
+    
+    console.log('Navigation allowed to:', to.name)
+    next()
+  } catch (error) {
+    console.error('Router navigation error:', error)
+    // Fallback to login on any error
+    if (to.name !== 'Login') {
       next({ name: 'Login' })
-      return
-    }
-    
-    // Check role-based access
-    if (to.meta.role && !authStore.hasRole(to.meta.role)) {
-      next({ name: 'Dashboard' })
-      return
-    }
-    
-    // Check permission-based access
-    if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
-      next({ name: 'Dashboard' })
-      return
+    } else {
+      next()
     }
   }
-  
-  // Check if route requires guest (not authenticated)
-  if (to.matched.some(record => record.meta.requiresGuest)) {
-    if (authStore.isAuthenticated) {
-      next({ name: 'Dashboard' })
-      return
-    }
-  }
-  
-  next()
 })
 
 export default router

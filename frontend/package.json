@@ -2,6 +2,9 @@
   "name": "inventory-store-frontend",
   "version": "1.0.0",
   "description": "Vue.js Frontend for Inventory Store Management System",
+  "author": "GReaTzA",
+  "license": "PROPRIETARY",
+  "private": true,
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",

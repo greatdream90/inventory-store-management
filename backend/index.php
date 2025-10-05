@@ -29,14 +29,18 @@ try {
     exit();
 }
 
-// Get request path
-$path = trim($_SERVER['REQUEST_URI'], '/');
-$path = strtok($path, '?'); // Remove query string
+// Get request path and clean it up
+$requestUri = $_SERVER['REQUEST_URI'];
+$path = trim(parse_url($requestUri, PHP_URL_PATH), '/');
 
-// Remove 'inventoty_store_v1/backend/' prefix if present
-$path = preg_replace('/^inventoty_store_v1\/backend\//', '', $path);
+// Log the incoming request for debugging
+error_log("Incoming request: " . $_SERVER['REQUEST_METHOD'] . " " . $requestUri);
+error_log("Processed path: " . $path);
 
-// Remove 'api/' prefix if present
+// Remove common prefixes that might interfere
+$path = preg_replace('/^inventory-store-management\/backend\//', '', $path);
+$path = preg_replace('/^backend\//', '', $path);
+$path = preg_replace('/^api\.php\//', '', $path);
 $path = preg_replace('/^api\//', '', $path);
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -53,35 +57,128 @@ if ($path === 'auth/login' && $method === 'POST') {
         exit();
     }
     
-    // Demo accounts for testing
-    $demoAccounts = [
-        'admin@demo.com' => ['password' => 'admin123', 'role' => 'admin', 'name' => 'Admin User'],
-        'staff@demo.com' => ['password' => 'staff123', 'role' => 'staff', 'name' => 'Staff User'],
-        'viewer@demo.com' => ['password' => 'viewer123', 'role' => 'viewer', 'name' => 'Viewer User']
-    ];
+    try {
+        // Check user in database
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND is_active = 1");
+        $stmt->execute([$input['email']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user && password_verify($input['password'], $user['password'])) {
+            // Login successful
+            $token = base64_encode(json_encode([
+                'user_id' => $user['id'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'exp' => time() + 3600 // 1 hour expiration
+            ]));
+            
+            echo json_encode([
+                'success' => true,
+                'token' => $token,
+                'user' => [
+                    'id' => $user['id'],
+                    'email' => $user['email'],
+                    'name' => $user['name'],
+                    'role' => $user['role']
+                ]
+            ]);
+        } else {
+            // Demo accounts fallback for testing
+            $demoAccounts = [
+                'admin@demo.com' => ['password' => 'admin123', 'role' => 'admin', 'name' => 'Admin User'],
+                'staff@demo.com' => ['password' => 'staff123', 'role' => 'staff', 'name' => 'Staff User'],
+                'viewer@demo.com' => ['password' => 'viewer123', 'role' => 'viewer', 'name' => 'Viewer User']
+            ];
+            
+            if (isset($demoAccounts[$input['email']]) && 
+                $demoAccounts[$input['email']]['password'] === $input['password']) {
+                
+                $demoUser = $demoAccounts[$input['email']];
+                $token = base64_encode(json_encode([
+                    'email' => $input['email'],
+                    'role' => $demoUser['role'],
+                    'exp' => time() + 3600
+                ]));
+                
+                echo json_encode([
+                    'success' => true,
+                    'token' => $token,
+                    'user' => [
+                        'email' => $input['email'],
+                        'name' => $demoUser['name'],
+                        'role' => $demoUser['role']
+                    ]
+                ]);
+            } else {
+                http_response_code(401);
+                echo json_encode(['error' => 'อีเมลหรือรหัสผ่านไม่ถูกต้อง']);
+            }
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+// Logout endpoint
+if ($path === 'auth/logout' && $method === 'POST') {
+    // For stateless JWT, we just return success
+    // Client should remove token from localStorage
+    echo json_encode([
+        'success' => true,
+        'message' => 'ออกจากระบบเรียบร้อย'
+    ]);
+    exit();
+}
+
+// Get user info endpoint
+if ($path === 'auth/me' && $method === 'GET') {
+    // Get Authorization header
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? null;
     
-    if (isset($demoAccounts[$input['email']]) && 
-        $demoAccounts[$input['email']]['password'] === $input['password']) {
-        
-        $user = $demoAccounts[$input['email']];
-        $token = base64_encode(json_encode([
-            'email' => $input['email'],
-            'role' => $user['role'],
-            'exp' => time() + 3600
-        ]));
-        
-        echo json_encode([
-            'success' => true,
-            'token' => $token,
-            'user' => [
-                'email' => $input['email'],
-                'name' => $user['name'],
-                'role' => $user['role']
-            ]
-        ]);
-    } else {
+    if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
         http_response_code(401);
-        echo json_encode(['error' => 'Invalid credentials']);
+        echo json_encode(['error' => 'Token required']);
+        exit();
+    }
+    
+    $token = $matches[1];
+    
+    try {
+        // Decode token (simple base64 decode for our implementation)
+        $decoded = json_decode(base64_decode($token), true);
+        
+        if (!$decoded || !isset($decoded['exp']) || $decoded['exp'] < time()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Token expired']);
+            exit();
+        }
+        
+        // If token has user_id, get from database
+        if (isset($decoded['user_id'])) {
+            $stmt = $pdo->prepare("SELECT id, name, email, role FROM users WHERE id = ? AND is_active = 1");
+            $stmt->execute([$decoded['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                echo json_encode($user);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'User not found']);
+            }
+        } else {
+            // Demo user from token
+            echo json_encode([
+                'email' => $decoded['email'],
+                'name' => $decoded['name'] ?? 'Demo User',
+                'role' => $decoded['role']
+            ]);
+        }
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid token']);
     }
     exit();
 }

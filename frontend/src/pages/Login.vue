@@ -103,21 +103,21 @@
         <div class="col-12">
           <button 
             type="button" 
-            class="btn btn-outline-success btn-sm w-100"
+            class="btn btn-outline-secondary btn-sm w-100"
             @click="loginAsDemo('staff')"
-            :disabled="authStore.isLoading"
+            :disabled="true"
           >
-            <i class="bi bi-person-badge me-2"></i>Staff Demo
+            <i class="bi bi-person-badge me-2"></i>Staff Demo (ยังไม่พร้อม)
           </button>
         </div>
         <div class="col-12">
           <button 
             type="button" 
-            class="btn btn-outline-info btn-sm w-100"
+            class="btn btn-outline-secondary btn-sm w-100"
             @click="loginAsDemo('viewer')"
-            :disabled="authStore.isLoading"
+            :disabled="true"
           >
-            <i class="bi bi-person me-2"></i>Viewer Demo
+            <i class="bi bi-person me-2"></i>Viewer Demo (ยังไม่พร้อม)
           </button>
         </div>
       </div>
@@ -201,20 +201,14 @@ async function handleLogin() {
 }
 
 async function loginAsDemo(role) {
-  const demoAccounts = {
-    admin: { email: 'admin@demo.com', password: 'admin123' },
-    staff: { email: 'staff@demo.com', password: 'staff123' },
-    viewer: { email: 'viewer@demo.com', password: 'viewer123' }
-  }
-
-  const demo = demoAccounts[role]
-  if (demo) {
-    form.email = demo.email
-    form.password = demo.password
+  // ใช้ข้อมูล admin ที่สร้างไว้แล้ว
+  if (role === 'admin') {
+    form.email = 'admin@inventory.com'
+    form.password = 'admin123'
     
     const success = await authStore.login({
-      email: demo.email,
-      password: demo.password,
+      email: form.email,
+      password: form.password,
       remember: false
     })
 
@@ -222,6 +216,8 @@ async function loginAsDemo(role) {
       toast.success(`เข้าสู่ระบบในฐานะ ${role} เรียบร้อย`)
       router.push('/')
     }
+  } else {
+    toast.warning(`บัญชี ${role} ยังไม่ได้สร้าง กรุณาใช้บัญชี Admin`)
   }
 }
 

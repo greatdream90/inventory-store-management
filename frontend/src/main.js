@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import App from './App.vue'
+import axios from 'axios'
 
 // Bootstrap CSS & JS
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -13,6 +14,11 @@ import 'vue-toastification/dist/index.css'
 
 // Custom CSS
 import './style.css'
+
+// Configure axios
+axios.defaults.baseURL = window.location.origin
+axios.defaults.headers.common['Accept'] = 'application/json'
+axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 const app = createApp(App)
 const pinia = createPinia()

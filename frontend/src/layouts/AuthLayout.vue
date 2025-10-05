@@ -19,7 +19,15 @@
           
           <div class="text-center mt-4">
             <small class="text-muted">
-              © 2024 Inventory Store Management System
+              © 2025 GReaTzA - All Rights Reserved
+            </small>
+            <br>
+            <small class="text-muted" style="font-size: 0.75rem;">
+              Proprietary Software - Unauthorized use prohibited
+            </small>
+            <br>
+            <small class="text-muted" style="font-size: 0.7rem;">
+              Built with Vue.js, Laravel, Bootstrap & other open source technologies
             </small>
           </div>
         </div>

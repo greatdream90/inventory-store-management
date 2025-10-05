@@ -9,13 +9,18 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api.php'),
+        rewrite: (path) => {
+          // Remove /api prefix to pass directly to backend
+          const newPath = path.replace(/^\/api/, '');
+          console.log('Rewriting path:', path, '->', newPath || '/');
+          return newPath || '/';
+        },
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
             console.log('Proxy error:', err);
           });
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log('Proxy request:', req.method, req.url);
+            console.log('Proxy request:', req.method, req.url, '->', proxyReq.path);
           });
         }
       }

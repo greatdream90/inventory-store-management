@@ -15,6 +15,11 @@ export const useAuthStore = defineStore('auth', () => {
   const userRole = computed(() => user.value?.role || null)
   const userName = computed(() => user.value?.name || '')
 
+  // Configure axios defaults
+  axios.defaults.baseURL = window.location.origin
+  axios.defaults.headers.common['Accept'] = 'application/json'
+  axios.defaults.headers.common['Content-Type'] = 'application/json'
+  
   // Set axios default authorization header
   if (token.value) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
@@ -89,12 +94,17 @@ export const useAuthStore = defineStore('auth', () => {
     const storedUser = localStorage.getItem('user')
     
     if (storedToken && storedUser) {
-      token.value = storedToken
-      user.value = JSON.parse(storedUser)
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
-      
-      // Verify token validity
-      fetchUser()
+      try {
+        token.value = storedToken
+        user.value = JSON.parse(storedUser)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+        
+        // Verify token validity (optional for now)
+        // fetchUser()
+      } catch (error) {
+        console.error('Error initializing auth:', error)
+        logout()
+      }
     }
   }
 
