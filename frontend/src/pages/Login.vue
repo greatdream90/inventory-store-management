@@ -1,63 +1,56 @@
 <template>
   <div class="login-form">
+    <div v-if="apiConfig.demoMode" class="alert alert-info mb-4" role="alert">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>โหมดทดสอบ (Demo Mode)</strong> - ไม่ต้องใช้ Backend Database
+      <small class="d-block mt-1">ข้อมูลจะไม่ถูกบันทึกในฐานข้อมูลจริง</small>
+    </div>
     <h4 class="text-center mb-4">เข้าสู่ระบบ</h4>
-    
     <form @submit.prevent="handleLogin">
-      <!-- Email Field -->
       <div class="mb-3">
-        <label for="email" class="form-label">
-          <i class="bi bi-envelope me-2"></i>อีเมล
-        </label>
-        <input 
-          type="email" 
+        <label for="email" class="form-label">อีเมล</label>
+        <input
+          type="email"
           class="form-control form-control-lg"
-          :class="{ 'is-invalid': errors.email }"
           id="email"
           v-model="form.email"
           placeholder="กรุณาใส่อีเมล"
           required
-          :disabled="authStore.isLoading"
+          :class="{ 'is-invalid': errors.email }"
         >
         <div class="invalid-feedback" v-if="errors.email">
           {{ errors.email }}
         </div>
       </div>
-      
-      <!-- Password Field -->
       <div class="mb-3">
-        <label for="password" class="form-label">
-          <i class="bi bi-lock me-2"></i>รหัสผ่าน
-        </label>
+        <label for="password" class="form-label">รหัสผ่าน</label>
         <div class="input-group">
-          <input 
-            :type="showPassword ? 'text' : 'password'" 
+          <input
+            :type="showPassword ? 'text' : 'password'"
             class="form-control form-control-lg"
-            :class="{ 'is-invalid': errors.password }"
             id="password"
             v-model="form.password"
             placeholder="กรุณาใส่รหัสผ่าน"
             required
-            :disabled="authStore.isLoading"
+            :class="{ 'is-invalid': errors.password }"
           >
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-outline-secondary"
             @click="togglePasswordVisibility"
             :disabled="authStore.isLoading"
           >
             <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
           </button>
-          <div class="invalid-feedback" v-if="errors.password">
-            {{ errors.password }}
-          </div>
+        </div>
+        <div class="invalid-feedback" v-if="errors.password">
+          {{ errors.password }}
         </div>
       </div>
-      
-      <!-- Remember Me -->
       <div class="mb-3 form-check">
-        <input 
-          type="checkbox" 
-          class="form-check-input" 
+        <input
+          type="checkbox"
+          class="form-check-input"
           id="remember"
           v-model="form.remember"
           :disabled="authStore.isLoading"
@@ -66,11 +59,9 @@
           จดจำการเข้าสู่ระบบ
         </label>
       </div>
-      
-      <!-- Submit Button -->
       <div class="d-grid">
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="btn btn-primary btn-lg"
           :disabled="authStore.isLoading"
         >
@@ -85,14 +76,15 @@
         </button>
       </div>
     </form>
-    
     <!-- Demo Accounts -->
     <div class="mt-4 p-3 bg-light rounded">
-      <h6 class="text-center mb-3">บัญชีทดสอบ</h6>
+      <h6 class="text-center mb-3">
+        {{ apiConfig.demoMode ? 'บัญชีสำหรับ Demo' : 'บัญชีทดสอบ' }}
+      </h6>
       <div class="row g-2">
         <div class="col-12">
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-outline-primary btn-sm w-100"
             @click="loginAsDemo('admin')"
             :disabled="authStore.isLoading"
@@ -101,28 +93,27 @@
           </button>
         </div>
         <div class="col-12">
-          <button 
-            type="button" 
-            class="btn btn-outline-secondary btn-sm w-100"
+          <button
+            type="button"
+            class="btn btn-outline-warning btn-sm w-100"
             @click="loginAsDemo('staff')"
-            :disabled="true"
+            :disabled="authStore.isLoading"
           >
-            <i class="bi bi-person-badge me-2"></i>Staff Demo (ยังไม่พร้อม)
+            <i class="bi bi-person-badge me-2"></i>Staff Demo
           </button>
         </div>
         <div class="col-12">
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-outline-secondary btn-sm w-100"
             @click="loginAsDemo('viewer')"
-            :disabled="true"
+            :disabled="authStore.isLoading"
           >
-            <i class="bi bi-person me-2"></i>Viewer Demo (ยังไม่พร้อม)
+            <i class="bi bi-person me-2"></i>Viewer Demo
           </button>
         </div>
       </div>
     </div>
-    
     <!-- Footer Links -->
     <div class="text-center mt-4">
       <a href="#" class="text-decoration-none small text-muted">ลืมรหัสผ่าน?</a>
@@ -135,6 +126,10 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
+import { apiConfig } from '@/config/app.js'
+
+// Force demo mode for localhost (no backend required)
+apiConfig.demoMode = true
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -201,14 +196,20 @@ async function handleLogin() {
 }
 
 async function loginAsDemo(role) {
-  // ใช้ข้อมูล admin ที่สร้างไว้แล้ว
-  if (role === 'admin') {
-    form.email = 'admin@inventory.com'
-    form.password = 'admin123'
+  const demoAccounts = {
+    admin: { email: 'admin@demo.com', password: 'admin123' },
+    staff: { email: 'staff@demo.com', password: 'staff123' },
+    viewer: { email: 'viewer@demo.com', password: 'viewer123' }
+  }
+
+  const account = demoAccounts[role]
+  if (account) {
+    form.email = account.email
+    form.password = account.password
     
     const success = await authStore.login({
-      email: form.email,
-      password: form.password,
+      email: account.email,
+      password: account.password,
       remember: false
     })
 

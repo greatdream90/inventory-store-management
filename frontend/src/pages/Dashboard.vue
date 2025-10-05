@@ -1,201 +1,206 @@
 <template>
-  <div class="dashboard">
-    <!-- Welcome Section -->
+  <div class="dashboard-page">
+    <!-- Welcome Header -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card bg-primary text-white">
+        <div class="card bg-gradient-primary text-white">
           <div class="card-body">
-            <div class="row align-items-center">
-              <div class="col">
-                <h3 class="mb-1">ยินดีต้อนรับ, {{ authStore.userName }}!</h3>
-                <p class="mb-0">ภาพรวมของระบบจัดการคลังสินค้า</p>
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-house-door fs-1"></i>
               </div>
-              <div class="col-auto">
-                <i class="bi bi-shop display-4"></i>
+              <div>
+                <h3 class="mb-1">ยินดีต้อนรับสู่ระบบจัดการคลังสินค้า</h3>
+                <p class="mb-0 opacity-75">วันนี้ {{ formatDate(new Date()) }}</p>
+                <small class="opacity-75">
+                  <i class="bi bi-person me-1"></i>{{ authStore.userName }} ({{ authStore.userRole }})
+                  {{ apiConfig.demoMode ? '- โหมดทดสอบ' : '' }}
+                </small>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    
-    <!-- Statistics Cards -->
+
+    <!-- Stats Cards -->
     <div class="row mb-4">
       <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card stats-card bg-primary text-white h-100">
-          <div class="card-body text-center">
-            <i class="bi bi-box-seam display-4 mb-3"></i>
-            <div class="stats-number">{{ stats.totalProducts }}</div>
-            <div class="stats-label">สินค้าทั้งหมด</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card stats-card bg-success text-white h-100">
-          <div class="card-body text-center">
-            <i class="bi bi-graph-up display-4 mb-3"></i>
-            <div class="stats-number">{{ formatCurrency(stats.todaySales) }}</div>
-            <div class="stats-label">ยอดขายวันนี้</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card stats-card bg-warning text-white h-100">
-          <div class="card-body text-center">
-            <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
-            <div class="stats-number">{{ stats.lowStockItems }}</div>
-            <div class="stats-label">สินค้าเหลือน้อย</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6 mb-3">
-        <div class="card stats-card bg-info text-white h-100">
-          <div class="card-body text-center">
-            <i class="bi bi-people display-4 mb-3"></i>
-            <div class="stats-number">{{ stats.totalCustomers }}</div>
-            <div class="stats-label">ลูกค้าทั้งหมด</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="row">
-      <!-- Recent Sales -->
-      <div class="col-lg-8 mb-4">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="bi bi-receipt me-2"></i>การขายล่าสุด
-            </h5>
-            <router-link to="/sales" class="btn btn-sm btn-outline-primary">
-              ดูทั้งหมด
-            </router-link>
-          </div>
+        <div class="card text-white bg-primary">
           <div class="card-body">
-            <div v-if="recentSales.length === 0" class="text-center py-4 text-muted">
-              <i class="bi bi-inbox display-4"></i>
-              <p class="mt-2">ยังไม่มีการขาย</p>
-            </div>
-            <div class="table-responsive" v-else>
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>เลขที่</th>
-                    <th>ลูกค้า</th>
-                    <th>จำนวนรายการ</th>
-                    <th>ยอดรวม</th>
-                    <th>สถานะ</th>
-                    <th>วันที่</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="sale in recentSales" :key="sale.id">
-                    <td class="fw-bold">#{{ sale.sale_number }}</td>
-                    <td>{{ sale.customer?.name || 'ลูกค้าทั่วไป' }}</td>
-                    <td>{{ sale.total_items }} รายการ</td>
-                    <td class="fw-bold text-success">{{ formatCurrency(sale.total) }}</td>
-                    <td>
-                      <span class="badge" :class="getSaleStatusClass(sale.status)">
-                        {{ getSaleStatusText(sale.status) }}
-                      </span>
-                    </td>
-                    <td>{{ formatDateTime(sale.created_at) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-box fs-2"></i>
+              </div>
+              <div>
+                <h6 class="card-title mb-0">สินค้าทั้งหมด</h6>
+                <h3 class="mb-0">{{ stats.totalProducts }}</h3>
+                <small class="opacity-75">+5 จากเมื่อวาน</small>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Low Stock Alert -->
-      <div class="col-lg-4 mb-4">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-warning">
-              <i class="bi bi-exclamation-triangle me-2"></i>สินค้าเหลือน้อย
-            </h5>
-            <router-link to="/inventory" class="btn btn-sm btn-outline-warning">
-              จัดการ
-            </router-link>
-          </div>
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-white bg-success">
           <div class="card-body">
-            <div v-if="lowStockProducts.length === 0" class="text-center py-4 text-muted">
-              <i class="bi bi-check-circle display-4 text-success"></i>
-              <p class="mt-2">สินค้าปกติทั้งหมด</p>
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-currency-dollar fs-2"></i>
+              </div>
+              <div>
+                <h6 class="card-title mb-0">ยอดขายวันนี้</h6>
+                <h3 class="mb-0">฿{{ stats.todaySales.toLocaleString() }}</h3>
+                <small class="opacity-75">+12% จากเมื่อวาน</small>
+              </div>
             </div>
-            <div v-else>
-              <div v-for="product in lowStockProducts" :key="product.id" 
-                   class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
-                <div>
-                  <div class="fw-bold">{{ product.name }}</div>
-                  <small class="text-muted">SKU: {{ product.sku }}</small>
-                </div>
-                <div class="text-end">
-                  <div class="fw-bold text-danger">{{ product.quantity }} {{ product.unit }}</div>
-                  <small class="text-muted">ขั้นต่ำ: {{ product.min_quantity }}</small>
-                </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-white bg-warning">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-people fs-2"></i>
+              </div>
+              <div>
+                <h6 class="card-title mb-0">ลูกค้าทั้งหมด</h6>
+                <h3 class="mb-0">{{ stats.totalCustomers }}</h3>
+                <small class="opacity-75">+8 คนใหม่</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card text-white bg-info">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-graph-up fs-2"></i>
+              </div>
+              <div>
+                <h6 class="card-title mb-0">คำสั่งซื้อ</h6>
+                <h3 class="mb-0">{{ stats.totalOrders }}</h3>
+                <small class="opacity-75">15 รอดำเนินการ</small>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    
-    <!-- Quick Actions -->
-    <div class="row">
-      <div class="col-12">
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+      <div class="col-lg-8 mb-3">
         <div class="card">
           <div class="card-header">
-            <h5 class="mb-0">
-              <i class="bi bi-lightning me-2"></i>การดำเนินการด่วน
-            </h5>
+            <h5 class="mb-0">ยอดขาย 7 วันที่ผ่านมา</h5>
           </div>
           <div class="card-body">
-            <div class="row">
-              <div class="col-lg-2 col-md-4 col-6 mb-3" v-if="authStore.hasPermission('sales.create')">
-                <router-link to="/pos" class="btn btn-primary w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-cart-plus fs-1 mb-2"></i>
-                  <span>ขายสินค้า</span>
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="salesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">สินค้าขายดี</h5>
+          </div>
+          <div class="card-body">
+            <div class="list-group list-group-flush">
+              <div v-for="product in topProducts" :key="product.id" class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <div>
+                  <h6 class="mb-0">{{ product.name }}</h6>
+                  <small class="text-muted">{{ product.category }}</small>
+                </div>
+                <span class="badge bg-primary rounded-pill">{{ product.sales }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Recent Activity -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">การดำเนินการด่วน</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-6">
+                <router-link to="/pos" class="btn btn-outline-primary w-100">
+                  <i class="bi bi-calculator me-2"></i>
+                  ขายสินค้า
                 </router-link>
               </div>
-              
-              <div class="col-lg-2 col-md-4 col-6 mb-3" v-if="authStore.hasPermission('products.create')">
-                <router-link to="/products" class="btn btn-success w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-plus-square fs-1 mb-2"></i>
-                  <span>เพิ่มสินค้า</span>
+              <div class="col-6">
+                <router-link to="/products" class="btn btn-outline-success w-100">
+                  <i class="bi bi-plus-circle me-2"></i>
+                  เพิ่มสินค้า
                 </router-link>
               </div>
-              
-              <div class="col-lg-2 col-md-4 col-6 mb-3" v-if="authStore.hasPermission('customers.create')">
-                <router-link to="/customers" class="btn btn-info w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-person-plus fs-1 mb-2"></i>
-                  <span>เพิ่มลูกค้า</span>
+              <div class="col-6">
+                <router-link to="/inventory" class="btn btn-outline-warning w-100">
+                  <i class="bi bi-box-seam me-2"></i>
+                  จัดการสต๊อก
                 </router-link>
               </div>
-              
-              <div class="col-lg-2 col-md-4 col-6 mb-3" v-if="authStore.hasPermission('reports.view')">
-                <router-link to="/reports" class="btn btn-secondary w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-graph-up fs-1 mb-2"></i>
-                  <span>รายงาน</span>
+              <div class="col-6">
+                <router-link to="/reports" class="btn btn-outline-info w-100">
+                  <i class="bi bi-graph-up me-2"></i>
+                  รายงาน
                 </router-link>
               </div>
-              
-              <div class="col-lg-2 col-md-4 col-6 mb-3" v-if="authStore.hasPermission('inventory.manage')">
-                <router-link to="/inventory" class="btn btn-warning w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-boxes fs-1 mb-2"></i>
-                  <span>จัดการสต๊อก</span>
-                </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">กิจกรรมล่าสุด</h5>
+          </div>
+          <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+            <div class="list-group list-group-flush">
+              <div v-for="activity in recentActivities" :key="activity.id" class="list-group-item px-0">
+                <div class="d-flex align-items-start">
+                  <div class="me-3 mt-1">
+                    <i class="bi" :class="activity.icon" :style="{ color: activity.color }"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <p class="mb-1">{{ activity.message }}</p>
+                    <small class="text-muted">{{ formatDate(activity.timestamp) }}</small>
+                  </div>
+                </div>
               </div>
-              
-              <div class="col-lg-2 col-md-4 col-6 mb-3">
-                <router-link to="/notifications" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
-                  <i class="bi bi-bell fs-1 mb-2"></i>
-                  <span>การแจ้งเตือน</span>
-                </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    <div v-if="lowStockProducts.length > 0" class="row">
+      <div class="col-12">
+        <div class="alert alert-warning">
+          <h5><i class="bi bi-exclamation-triangle me-2"></i>สินค้าเหลือน้อย</h5>
+          <div class="row">
+            <div v-for="product in lowStockProducts" :key="product.id" class="col-md-4">
+              <div class="d-flex justify-content-between">
+                <span>{{ product.name }}</span>
+                <span class="badge bg-warning">{{ product.stock }} ชิ้น</span>
               </div>
             </div>
           </div>
@@ -208,163 +213,131 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { apiConfig } from '@/config/app.js'
 
 const authStore = useAuthStore()
 
-// Reactive data
+// Mock data
 const stats = ref({
-  totalProducts: 0,
-  todaySales: 0,
-  lowStockItems: 0,
-  totalCustomers: 0
+  totalProducts: 156,
+  todaySales: 45620,
+  totalCustomers: 89,
+  totalOrders: 234
 })
 
-const recentSales = ref([])
-const lowStockProducts = ref([])
-const isLoading = ref(false)
+const topProducts = ref([
+  { id: 1, name: 'Laptop Dell', category: 'อิเลคทรอนิกส์', sales: 45 },
+  { id: 2, name: 'T-Shirt Blue', category: 'เสื้อผ้า', sales: 32 },
+  { id: 3, name: 'JavaScript Guide', category: 'หนังสือ', sales: 28 },
+  { id: 4, name: 'Gaming Mouse', category: 'อิเลคทรอนิกส์', sales: 24 },
+  { id: 5, name: 'Coffee Mug', category: 'ของใช้', sales: 19 }
+])
+
+const recentActivities = ref([
+  {
+    id: 1,
+    message: 'ขายสินค้า Laptop Dell จำนวน 2 ชิ้น',
+    timestamp: new Date(Date.now() - 5 * 60 * 1000),
+    icon: 'bi-cart-check',
+    color: '#28a745'
+  },
+  {
+    id: 2,
+    message: 'เพิ่มสินค้าใหม่ Wireless Keyboard',
+    timestamp: new Date(Date.now() - 15 * 60 * 1000),
+    icon: 'bi-plus-circle',
+    color: '#007bff'
+  },
+  {
+    id: 3,
+    message: 'ปรับปรุงสต๊อก T-Shirt Blue เพิ่ม 50 ชิ้น',
+    timestamp: new Date(Date.now() - 30 * 60 * 1000),
+    icon: 'bi-box-seam',
+    color: '#ffc107'
+  },
+  {
+    id: 4,
+    message: 'ลูกค้าใหม่ลงทะเบียน: นาย วิชัย ใจดี',
+    timestamp: new Date(Date.now() - 45 * 60 * 1000),
+    icon: 'bi-person-plus',
+    color: '#17a2b8'
+  }
+])
+
+const lowStockProducts = ref([
+  { id: 1, name: 'Laptop Dell', stock: 2 },
+  { id: 2, name: 'Gaming Mouse', stock: 5 },
+  { id: 3, name: 'USB Cable', stock: 3 }
+])
 
 // Methods
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('th-TH', {
-    style: 'currency',
-    currency: 'THB'
-  }).format(amount)
-}
-
-function formatDateTime(dateString) {
-  return new Date(dateString).toLocaleString('th-TH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-function getSaleStatusClass(status) {
-  const classes = {
-    pending: 'bg-warning',
-    completed: 'bg-success',
-    cancelled: 'bg-danger',
-    refunded: 'bg-secondary'
-  }
-  return classes[status] || 'bg-secondary'
-}
-
-function getSaleStatusText(status) {
-  const texts = {
-    pending: 'รอดำเนินการ',
-    completed: 'สำเร็จ',
-    cancelled: 'ยกเลิก',
-    refunded: 'คืนเงิน'
-  }
-  return texts[status] || status
-}
-
-async function loadDashboardData() {
-  isLoading.value = true
-  try {
-    // TODO: Replace with actual API calls
-    // Simulate loading data
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Mock data for demonstration
-    stats.value = {
-      totalProducts: 150,
-      todaySales: 12500.00,
-      lowStockItems: 5,
-      totalCustomers: 75
-    }
-    
-    recentSales.value = [
-      {
-        id: 1,
-        sale_number: 'SAL-20241004-0001',
-        customer: { name: 'คุณสมชาย ใจดี' },
-        total_items: 3,
-        total: 850.00,
-        status: 'completed',
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 2,
-        sale_number: 'SAL-20241004-0002',
-        customer: null,
-        total_items: 1,
-        total: 250.00,
-        status: 'completed',
-        created_at: new Date(Date.now() - 3600000).toISOString()
-      }
-    ]
-    
-    lowStockProducts.value = [
-      {
-        id: 1,
-        name: 'เสื้อยืดผ้าฝ้าย',
-        sku: 'T001',
-        quantity: 2,
-        min_quantity: 5,
-        unit: 'ตัว'
-      },
-      {
-        id: 2,
-        name: 'กระเป๋าสะพายหลัง',
-        sku: 'B001',
-        quantity: 1,
-        min_quantity: 3,
-        unit: 'ใบ'
-      }
-    ]
-    
-  } catch (error) {
-    console.error('Error loading dashboard data:', error)
-  } finally {
-    isLoading.value = false
+function formatDate(date) {
+  const now = new Date()
+  const targetDate = new Date(date)
+  const diffInMinutes = Math.floor((now - targetDate) / (1000 * 60))
+  
+  if (diffInMinutes < 1) {
+    return 'เมื่อสักครู่'
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} นาทีที่แล้ว`
+  } else if (diffInMinutes < 1440) {
+    return `${Math.floor(diffInMinutes / 60)} ชั่วโมงที่แล้ว`
+  } else {
+    return targetDate.toLocaleDateString('th-TH')
   }
 }
 
-// Initialize
 onMounted(() => {
-  loadDashboardData()
+  // Initialize chart (would use Chart.js in real implementation)
+  console.log('Dashboard mounted - demo mode:', apiConfig.demoMode)
 })
 </script>
 
 <style scoped>
-.dashboard {
-  animation: fadeIn 0.5s ease-out;
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.card {
+  transition: transform 0.2s;
+  border: 1px solid rgba(0, 0, 0, 0.125);
 }
 
-.stats-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stats-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
-}
-
-.stats-number {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.stats-label {
-  opacity: 0.9;
-  font-size: 0.9rem;
-}
-
-.btn.w-100.h-100 {
-  min-height: 120px;
-  text-decoration: none;
-}
-
-.btn.w-100.h-100:hover {
+.card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.chart-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.chart-container::before {
+  content: "📊 Demo Chart Area";
+  color: #6c757d;
+  font-size: 1.2rem;
+}
+
+.list-group-item {
+  border: none;
+  padding: 0.75rem 0;
+}
+
+.list-group-item:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
 }
 </style>

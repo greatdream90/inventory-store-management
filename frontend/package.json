@@ -8,6 +8,8 @@
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",
+    "demo": "VITE_DEMO_MODE=true vite",
+    "backend": "VITE_DEMO_MODE=false vite",
     "build": "vite build",
     "preview": "vite preview",
     "serve": "vite preview",

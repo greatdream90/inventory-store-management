@@ -2,8 +2,20 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
+import { apiConfig } from '../config/app.js'
+import { mockApi } from '../config/mockApi.js'
 
 const toast = useToast()
+
+// Log environment info
+if (apiConfig.features.debugLogging) {
+  console.log('🔧 Auth Store Environment:', {
+    isDevelopment: apiConfig.isDevelopment,
+    isLocalhost: apiConfig.isLocalhost,
+    demoMode: apiConfig.demoMode,
+    baseURL: apiConfig.baseURL
+  })
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -15,8 +27,18 @@ export const useAuthStore = defineStore('auth', () => {
   const userRole = computed(() => user.value?.role || null)
   const userName = computed(() => user.value?.name || '')
 
-  // Configure axios defaults - use relative paths to work with Vite proxy
-  // axios.defaults.baseURL = 'http://localhost:8000' // Use proxy instead
+  // Configure axios defaults based on environment
+  if (!apiConfig.demoMode) {
+    if (apiConfig.isLocalhost) {
+      // Use Vite proxy for localhost development
+      axios.defaults.baseURL = ''
+    } else {
+      // Use direct API URL for production
+      axios.defaults.baseURL = apiConfig.baseURL
+    }
+    axios.defaults.timeout = apiConfig.timeout
+  }
+  
   axios.defaults.headers.common['Accept'] = 'application/json'
   axios.defaults.headers.common['Content-Type'] = 'application/json'
   
@@ -29,9 +51,26 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(credentials) {
     isLoading.value = true
     try {
-      console.log('Attempting login with:', credentials)
-      const response = await axios.post('/api/auth/login', credentials)
-      console.log('Login response:', response.data)
+      if (apiConfig.features.debugLogging) {
+        console.log('Attempting login with:', credentials)
+        console.log('Demo mode:', apiConfig.demoMode)
+      }
+      
+      let response
+      
+      // Use mock API in demo mode
+      if (apiConfig.demoMode) {
+        response = await mockApi.login(credentials)
+      } else {
+        // Use real API
+        const endpoint = apiConfig.isLocalhost ? '/api/auth/login' : '/auth/login'
+        response = await axios.post(endpoint, credentials)
+      }
+      
+      if (apiConfig.features.debugLogging) {
+        console.log('Login response:', response.data)
+      }
+      
       const { token: authToken, user: authUser } = response.data
       
       token.value = authToken
@@ -40,7 +79,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', authToken)
       localStorage.setItem('user', JSON.stringify(authUser))
       
-      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+      if (!apiConfig.demoMode) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+      }
       
       toast.success(`ยินดีต้อนรับ, ${authUser.name}!`)
       return true
@@ -57,7 +98,12 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       if (token.value) {
-        await axios.post('/api/auth/logout')
+        if (apiConfig.demoMode) {
+          await mockApi.logout()
+        } else {
+          const endpoint = apiConfig.isLocalhost ? '/api/auth/logout' : '/auth/logout'
+          await axios.post(endpoint)
+        }
       }
     } catch (error) {
       console.error('Logout error:', error)
@@ -68,7 +114,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       
-      delete axios.defaults.headers.common['Authorization']
+      if (!apiConfig.demoMode) {
+        delete axios.defaults.headers.common['Authorization']
+      }
       
       toast.info('ออกจากระบบเรียบร้อย')
     }
@@ -78,7 +126,15 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return false
     
     try {
-      const response = await axios.get('/api/auth/me')
+      let response
+      
+      if (apiConfig.demoMode) {
+        response = await mockApi.me()
+      } else {
+        const endpoint = apiConfig.isLocalhost ? '/api/auth/me' : '/auth/me'
+        response = await axios.get(endpoint)
+      }
+      
       user.value = response.data
       localStorage.setItem('user', JSON.stringify(response.data))
       return true

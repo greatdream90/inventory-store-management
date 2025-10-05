@@ -7,7 +7,6 @@ ini_set('display_errors', 1);
 // CORS configuration for production
 $allowedOrigins = [
     'http://localhost:3001',
-    'http://localhost:3002',
     'https://candid-puffpuff-5120a2.netlify.app',
     $_ENV['FRONTEND_URL'] ?? 'https://candid-puffpuff-5120a2.netlify.app'
 ];
