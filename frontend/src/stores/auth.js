@@ -15,8 +15,8 @@ export const useAuthStore = defineStore('auth', () => {
   const userRole = computed(() => user.value?.role || null)
   const userName = computed(() => user.value?.name || '')
 
-  // Configure axios defaults
-  axios.defaults.baseURL = window.location.origin
+  // Configure axios defaults - use relative paths to work with Vite proxy
+  // axios.defaults.baseURL = 'http://localhost:8000' // Use proxy instead
   axios.defaults.headers.common['Accept'] = 'application/json'
   axios.defaults.headers.common['Content-Type'] = 'application/json'
   

@@ -7,6 +7,7 @@ ini_set('display_errors', 1);
 // CORS configuration for production
 $allowedOrigins = [
     'http://localhost:3001',
+    'http://localhost:3002',
     'https://candid-puffpuff-5120a2.netlify.app',
     $_ENV['FRONTEND_URL'] ?? 'https://candid-puffpuff-5120a2.netlify.app'
 ];
@@ -40,9 +41,9 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
-    exit();
+    // For testing, allow API to work without database for auth endpoints
+    $pdo = null;
+    error_log("Database connection failed, continuing without DB: " . $e->getMessage());
 }
 
 // Get request path and clean it up
@@ -51,13 +52,15 @@ $path = trim(parse_url($requestUri, PHP_URL_PATH), '/');
 
 // Log the incoming request for debugging
 error_log("Incoming request: " . $_SERVER['REQUEST_METHOD'] . " " . $requestUri);
-error_log("Processed path: " . $path);
+error_log("Initial path: " . $path);
 
 // Remove common prefixes that might interfere
 $path = preg_replace('/^inventory-store-management\/backend\//', '', $path);
 $path = preg_replace('/^backend\//', '', $path);
 $path = preg_replace('/^api\.php\//', '', $path);
 $path = preg_replace('/^api\//', '', $path);
+
+error_log("Final path after processing: " . $path);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -74,10 +77,14 @@ if ($path === 'auth/login' && $method === 'POST') {
     }
     
     try {
-        // Check user in database
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND is_active = 1");
-        $stmt->execute([$input['email']]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = null;
+        
+        // Check user in database if available
+        if ($pdo) {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND is_active = 1");
+            $stmt->execute([$input['email']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
         
         if ($user && password_verify($input['password'], $user['password'])) {
             // Login successful
